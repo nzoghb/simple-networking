@@ -6,19 +6,18 @@ from color_utils import *
 class Server(object):
     # The following may be useful, `ps -fA | grep python`
     def __init__(self, host, port, protocol='tcp'):
-        self.peers = []
+        self.clients = []
         self.online = False
         self.protocol = protocol
-        sock = socket.socket()
-        HOST = host
-        PORT = port
+        self.sock = socket.socket()
         try:
-            sock.bind((HOST, PORT))
-            self.sock = sock
+            self.sock.bind((host, port))
+            self.host = host
+            self.port = port
             self.online = True
         except ConnectionRefusedError:
             print("Connection refused...")
-            exit(0)
+            exit(1)
 
     def listen(self, limit=5):
         assert(self.online)
@@ -30,7 +29,7 @@ class Server(object):
             try:
                 c, addr = self.sock.accept()
                 gprint("Got connection from", addr)
-                message = ret_msg(c)
+                message = self.ret_msg(c)
                 response = self.process(message)
                 self.respond(c, response)
                 c.close()

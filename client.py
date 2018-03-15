@@ -5,18 +5,18 @@ from color_utils import *
 
 class Client(object):
     def __init__(self, host, port, protocol='tcp'):
+        self.peers = []
         self.online = False
         self.protocol = protocol
-        sock = socket.socket()
-        HOST = host
-        PORT = port
+        self.sock = socket.socket()
         try:
-            sock.connect((HOST, PORT))
-            self.sock = sock
+            self.sock.bind((host, port))
+            self.host = host
+            self.port = port
             self.online = True
         except ConnectionRefusedError:
-            rprint("Connection refused...")
-            exit(0)
+            print("Connection refused...")
+            exit(1)
 
     def push(self, m):
         assert(type(m) == str)
