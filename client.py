@@ -10,7 +10,7 @@ class Client(object):
         self.protocol = protocol
         self.sock = socket.socket()
         try:
-            self.sock.bind((host, port))
+            self.sock.connect((host, port))
             self.host = host
             self.port = port
             self.online = True
