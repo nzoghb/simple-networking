@@ -1,5 +1,68 @@
 import argparse
-from socket_utils import *
+import socket
+from color_utils import *
+
+
+class Server(object):
+    # The following may be useful, `ps -fA | grep python`
+    def __init__(self, host, port, protocol='tcp'):
+        self.peers = []
+        self.online = False
+        self.protocol = protocol
+        sock = socket.socket()
+        HOST = host
+        PORT = port
+        try:
+            sock.bind((HOST, PORT))
+            self.sock = sock
+            self.online = True
+        except ConnectionRefusedError:
+            print("Connection refused...")
+            exit(0)
+
+    def listen(self, limit=5):
+        assert(self.online)
+        message = "..."
+        self.sock.listen(limit)
+        while True:
+            c = None
+            print("Listening...")
+            try:
+                c, addr = self.sock.accept()
+                gprint("Got connection from", addr)
+                message = ret_msg(c)
+                response = self.process(message)
+                self.respond(c, response)
+                c.close()
+            # except ConnectionRefusedError:
+            #     rprint("Connection refused...")
+            except KeyboardInterrupt:
+                rprint("\nKeyboardInterrupt...\nSocket closed.")
+                if c:
+                    c.close()
+                break
+
+    def process(self, m):
+        if m == 'PING':
+            return 'PONG'
+        else:
+            return 'hello, World!'
+
+    def respond(self, sock, m):
+        assert(type(m) == str)
+        bprint("Sending message: ", m)
+        sock.send(m.encode())
+
+    def ret_msg(self, sock):
+        assert(self.online)
+        message = sock.recv(1024).decode('utf-8')
+        gprint("Received message: ", message)
+        return message
+
+    def close(self):
+        assert(self.online)
+        self.sock.close()
+        self.online = False
 
 
 if __name__ == '__main__':
@@ -8,23 +71,6 @@ if __name__ == '__main__':
         (defaults to 12345)")
     args = parser.parse_args()
     p = args.port if args.port else 12345
-    sock = socket_create_server(socket.gethostname(), p)
-    sock.listen(5)
-    while True:
-        c = None
-        print("Listening...")
-        try:
-            c, addr = socket_accept(sock)
-            print("Got connection from", addr)
-            socket_push(c, b'PONG')
-        except ConnectionRefusedError:
-            print("Connection refused...")
-        except KeyboardInterrupt:
-            print("\nKeyboardInterrupt...\nSocket closed.")
-            break
-        finally:
-            if c:
-                socket_close(c)
-    socket_close(sock)
-
-# The following may be useful, `ps -fA | grep python`
+    sock = Server(socket.gethostname(), p)
+    sock.listen()
+    sock.close()
